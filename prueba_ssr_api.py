@@ -8,13 +8,26 @@ app = Flask(__name__)
 app.secret_key = 'thisismysecretkey'
 
 
+users = [
+    {
+        "user": "admin",
+        "password": "admin"
+    },
+    {
+        "user": "admin2",
+        "password": "admin2"
+    }
+]
+
+
+
 def error(error_dict, status=400):
     return make_response(error_dict, status)
 
 
 @app.route("/members_only")
 def members_only():
-    if request.json['user'] not in session:
+    if not(_user_in_session(request.json['user'])):
         return redirect(url_for("login_get"))
     my_id = request.args.get('id')
     if my_id is None or len(my_id) == 0:
@@ -24,20 +37,6 @@ def members_only():
     r = requests.get(url=mi_url)
     data = json.loads(r.text)
     return data[0]
-
-
-def _check_correct_user_and_pass(user, password):
-    for element in users:
-        if element["user"] == user and element["password"] == password:
-            return True
-    return False
-
-
-def _user_already_exists(user):
-    for element in users:
-        if element['user'] == user:
-            return True
-    return False
 
 
 @app.route("/login", methods=["POST"])
@@ -62,7 +61,7 @@ def login_get():
 
 @app.route("/logout", methods=["POST"])
 def logout():
-    if request.json['user'] not in session:
+    if not(_user_in_session(request.json['user'])):
         return redirect(url_for("login_get"))
     session.remove(request.json['user'])
     return {
@@ -83,30 +82,22 @@ def register():
 
 
 def _user_in_session(my_user):
-    for user in session:
-        if user['user'] == my_user:
-            return True
+    return any(list(filter(lambda user: user == my_user, session)))
 
 
-users = [
-    {
-        "user": "admin",
-        "password": "admin"
-    },
-    {
-        "user": "admin2",
-        "password": "admin2"
-    }
-]
+def _check_correct_user_and_pass(user, password):
+    return any(list(filter(lambda element: element['user'] == user and element['password'] == password, users)))
+
+
+def _user_already_exists(my_user):
+    return any(list(filter(lambda user: user['user'] == my_user, users)))
 
 
 @app.route("/user")
 def user():
-    if "user" in session:
-        user = session["user"]
-        return user
-    else:
-        return redirect(url_for("login"))
+    if not(_user_in_session(request.json['user'])):
+        return redirect(url_for("login_get"))
+    return request.json['user']
 
 
 if __name__ == '__main__':
