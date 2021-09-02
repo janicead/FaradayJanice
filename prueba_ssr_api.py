@@ -20,7 +20,6 @@ users = [
 ]
 
 
-
 def error(error_dict, status=400):
     return make_response(error_dict, status)
 
@@ -82,15 +81,15 @@ def register():
 
 
 def _user_in_session(my_user):
-    return any(list(filter(lambda user: user == my_user, session)))
+    return any(list(filter(lambda user_session: user_session == my_user, session)))
 
 
-def _check_correct_user_and_pass(user, password):
-    return any(list(filter(lambda element: element['user'] == user and element['password'] == password, users)))
+def _check_correct_user_and_pass(my_user, password):
+    return any(list(filter(lambda element: element['user'] == my_user and element['password'] == password, users)))
 
 
 def _user_already_exists(my_user):
-    return any(list(filter(lambda user: user['user'] == my_user, users)))
+    return any(list(filter(lambda user_users: user_users['user'] == my_user, users)))
 
 
 @app.route("/user")
